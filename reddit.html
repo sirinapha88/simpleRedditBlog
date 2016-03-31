@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" ng-app='myApp'>
+<head>
+	<meta charset="utf-8">
+	<title>Reddit Clone</title>
+	<script type='text/javascript' src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.4/angular.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
+
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" media="screen">
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script type='text/javascript' src= 'app.js'></script>
+</head>
+<body ng-controller="redditController">
+	<nav class="navbar navbar-default">
+	<div class="container-fluid">
+		<ul class="nav nav-tabs"> 
+  			<li role="presentation" class="active"><a href="#">Reddit Clone</a></li>	
+  			<li role="presentation">
+  				<a href="#" ng-click="showTheForm = !showTheForm">
+  				<span class="glyphicon glyphicon-plus"></span>Submit Post</a>  
+  			</li>
+  			<li class="navbar-form">
+		        <div class="form-inline">
+		          	<input type="text" placeholder="search" class="form-control" ng-model="view.search">
+		        </div>
+		    </li>
+			 
+    		<li class="dropdown">
+          		<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">Sort by Votes <span class="caret"></span></a>
+          		<ul class="dropdown-menu" ng-model="sorted">
+	            	<li><a href="#">Sort by Votes</a></li>
+		            <li><a href="#">Sort by Date</a></li>
+		            <li><a href="#">Sort by Title</a></li>
+          		</ul>
+        	</li>
+		</ul>
+		</nav>
+	</div> <!-- end container -->
+		<div class="container">
+			<form ng-show="showTheForm" name="userForm" ng-submit="submitForm(userForm.$valid)" novalidate>
+  					<div class="form-group" ng-class="{ 'has-error' : userForm.title.$invalid && !userForm.title.$pristine ,'has-success' : userForm.title.$valid }">
+					    <label class="control-label" for="title">Title:</label>
+					    <input autofocus type="text" name="title" class="form-control" ng-model="newPost.title" ng-required="true" id="title" ng-minlength="3" ng-maxlength="20" >
+					    <p ng-show="userForm.title.$error.minlength" class="help-block">title is too short.</p>
+					    <p ng-show="userForm.title.$error.maxlength" class="help-block">title is too long.</p>
+					</div>
+
+						<div class="form-group" ng-class="{ 'has-error' : userForm.author.$invalid && !userForm.author.$pristine ,'has-success' : userForm.author.$valid }">
+					    <label class="control-label" for="author">Author</label>
+					    <input type="text" name="author" class="form-control" ng-model="newPost.author" id="author" ng-minlength="3" ng-maxlength="25" ng-required="true">
+					    <p ng-show="userForm.author.$error.minlength" class="help-block">author is too short.</p>
+					    <p ng-show="userForm.author.$error.maxlength" class="help-block">author is too long.</p>
+					</div>
+
+					<div class="form-group" ng-class="{ 'has-error' : userForm.imgURL.$invalid && !userForm.imgURL.$pristine ,'has-success' : userForm.imgURL.$valid }">
+					    <label class="control-label" for="imgURL">Image URL</label>
+					    <input type="text" id="imgURL" name="imgURL" class="form-control" ng-required="true" ng-model="newPost.imgURL">
+					    <p ng-show="userForm.imgURL.$invalid && !userForm.imgURL.$pristine" class="help-block">Enter a valid imgURL.</p>
+					</div>
+
+					<div class="form-group" ng-class="{ 'has-error' : userForm.desc.$invalid && !userForm.desc.$pristine ,'has-success' : userForm.desc.$valid }">
+					    <label class="control-label" for="desc">Description</label>
+					    <input type="text" id="desc" name="desc" class="form-control" ng-required="true" ng-model="newPost.desc">
+					    <p ng-show="userForm.desc.$invalid && !userForm.desc.$pristine" class="help-block">Enter a valid desc.</p>
+					</div>
+								  	
+				    <button>Submit</button>
+				</form>
+		<div class="well" ng-repeat="item in view.posts | filter:view.search">
+			<div class="row">
+		  		<div class="col-xs-2"><img ng-src="{{item.imgURL}}"></div>
+		  			<div class="col-xs-10">
+			  		<h3>{{item.title}} |
+				  		<span class="glyphicon glyphicon-arrow-up" ng-click="updateVotes(item,1)"></span> 
+			          	<span class="glyphicon glyphicon-arrow-down" ng-click="updateVotes(item,-1)"></span>
+			          	<span ng-class="upvoteClass(item)">{{ item.votes }}</span>
+					</h3>
+			  		<h4>By {{item.author}}</h4>
+			  		<p>{{item.desc}}</p>
+			  		<span class="glyphicon glyphicon-calendar"></span>{{date}} | 
+			  		<span class="hoverable"> 
+
+		    		<span class="glyphicon glyphicon-comment" ng-click="showComment = !showComment">
+		   				<ng-pluralize count="item.comments.length" when="{1: '1 comment', 'other': '{{ item.comments.length }} comments'}"></ng-pluralize>
+		   			</span>
+			  		
+			  		<span class="hoverable" ng-click="showTheForm = !showTheForm"> |
+			            <span class="glyphicon glyphicon-pencil" ></span>
+			            Add comment
+		          		</span>
+		          	</span>
+
+		          	<div class="comment" ng-show="showComment" ng-repeat="comment in item.comments">
+		          		<p><strong>{{ comment.author }}</strong> - {{ comment.text }}
+		          		</p>
+		        	</div>
+		          	
+		          	<div>
+		          		<form class="form-inline" ng-submit="addComment(item,newComment)" ng-show="showTheForm">
+			          		<div class="form-group">
+				              	<label for="author">Author</label>
+				              	<input type="text" placeholder="author" class="form-control" ng-model="newComment.author">
+			            	</div>
+			            	<div class="form-group">
+				              <label for="text">Text</label>
+				              <input type="text" placeholder="text" class="form-control" ng-model="newComment.text">
+			            	</div>
+			            	<input class="btn btn-success" type="submit" value="Add Comment">
+			          	</form>
+		          	</div>
+				</div> <!-- end display -->
+			</div>
+		</div> <!-- end div row -->
+		
+	</div> <!-- end container -->
+
+</body>
+</html>
